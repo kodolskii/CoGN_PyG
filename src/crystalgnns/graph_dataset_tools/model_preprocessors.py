@@ -1,16 +1,19 @@
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
+import torch
 from typing import Tuple, List
-from tensorflow import (
-    TensorSpec,
-    convert_to_tensor,
-    float64,
-    float32,
-    int64,
-    int32,
-    RaggedTensor,
-    Tensor,
-)
+# from tensorflow import (
+#     TensorSpec,
+#     convert_to_tensor,
+#     float64,
+#     float32,
+#     int64,
+#     int32,
+#     RaggedTensor,
+#     Tensor,
+# )
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader
 from crystalgnns.graph_dataset_tools.graph_tuple import GraphTuple
 from kgcnn.graph.adj import get_angle_indices
 from enum import Enum
@@ -72,9 +75,10 @@ class ModelPreprocessor:
                 if not remove_no_edge_graphs or graph_tuple[i].num_edges[0] > 0:
                     yield self.to_tensor(graph_tuple[i])
 
-        dataset = tf.data.Dataset.from_generator(
-            dataset_generator, output_signature=self.signature
-        ).apply(tf.data.experimental.dense_to_ragged_batch(batch_size=batch_size))
+        # dataset = tf.data.Dataset.from_generator(
+        #     dataset_generator, output_signature=self.signature
+        # ).apply(tf.data.experimental.dense_to_ragged_batch(batch_size=batch_size))
+        dataset = Dataloader(dataset_generator, batch_size = batch_size)
 
         if cache_file is not None:
             dataset = dataset.cache(cache_file)
@@ -90,24 +94,45 @@ class GNPreprocessor(ModelPreprocessor):
 
         This are the properties available to use with the GNPreprocessor."""
 
-        distance = TensorSpec(shape=(None,), dtype=float32, name="distance")
-        offset = TensorSpec(shape=(None, 3), dtype=float32, name="offset")
-        cell_translation = TensorSpec(
+        # distance = TensorSpec(shape=(None,), dtype=float32, name="distance")
+        # offset = TensorSpec(shape=(None, 3), dtype=float32, name="offset")
+        # cell_translation = TensorSpec(
+        #     shape=(None, 3), dtype=float32, name="cell_translations"
+        # )
+        # symmop = TensorSpec(shape=(None, 4, 4), dtype=float32, name="symmops")
+        # voronoi_ridge_area = TensorSpec(
+        #     shape=(None,), dtype=float32, name="voronoi_ridge_area"
+        # )
+        # atomic_number = TensorSpec(shape=(None,), dtype=int32, name="atomic_number")
+        # frac_coords = TensorSpec(shape=(None, 3), dtype=float32, name="frac_coords")
+        # coords = TensorSpec(shape=(None, 3), dtype=float32, name="coords")
+        # multiplicity = TensorSpec(shape=(None,), dtype=int32, name="multiplicity")
+        # line_graph_edge_indices = TensorSpec(
+        #     shape=(None, 2), dtype=int32, name="line_graph_edge_indices"
+        # )
+        # edge_indices = TensorSpec(shape=(None, 2), dtype=int32, name="edge_indices")
+        # lattice_matrix = TensorSpec(shape=(3, 3), dtype=float32, name="lattice_matrix")
+
+    #PyG:
+
+            distance = torch.tensor([], dtype=float32, name="distance")
+        offset = torch.tensor(shape=(None, 3), dtype=float32, name="offset")
+        cell_translation = torch.tensor(
             shape=(None, 3), dtype=float32, name="cell_translations"
         )
-        symmop = TensorSpec(shape=(None, 4, 4), dtype=float32, name="symmops")
-        voronoi_ridge_area = TensorSpec(
+        symmop = torch.tensor(shape=(None, 4, 4), dtype=float32, name="symmops")
+        voronoi_ridge_area = torch.tensor(
             shape=(None,), dtype=float32, name="voronoi_ridge_area"
         )
-        atomic_number = TensorSpec(shape=(None,), dtype=int32, name="atomic_number")
-        frac_coords = TensorSpec(shape=(None, 3), dtype=float32, name="frac_coords")
-        coords = TensorSpec(shape=(None, 3), dtype=float32, name="coords")
-        multiplicity = TensorSpec(shape=(None,), dtype=int32, name="multiplicity")
-        line_graph_edge_indices = TensorSpec(
+        atomic_number = torch.tensor(shape=(None,), dtype=int32, name="atomic_number")
+        frac_coords = torch.tensor(shape=(None, 3), dtype=float32, name="frac_coords")
+        coords = torch.tensor(shape=(None, 3), dtype=float32, name="coords")
+        multiplicity = torch.tensor(shape=(None,), dtype=int32, name="multiplicity")
+        line_graph_edge_indices = torch.tensor(
             shape=(None, 2), dtype=int32, name="line_graph_edge_indices"
         )
-        edge_indices = TensorSpec(shape=(None, 2), dtype=int32, name="edge_indices")
-        lattice_matrix = TensorSpec(shape=(3, 3), dtype=float32, name="lattice_matrix")
+        edge_indices = torch.tensor(shape=(None, 2), dtype=int32, name="edge_indices")
+        lattice_matrix = torch.tensor(shape=(3, 3), dtype=float32, name="lattice_matrix")
 
     def __init__(
         self,
@@ -134,7 +159,8 @@ class GNPreprocessor(ModelPreprocessor):
         self.line_graph_directions = line_graph_directions
         input_signature = tuple([i.value for i in inputs])
         if output_signature is None:
-            output_signature = TensorSpec(shape=(), dtype=float64)
+            # output_signature = TensorSpec(shape=(), dtype=float64)
+            output_signature = torch.tensor([], dtype=float64)
         super().__init__(output_signature, input_signature)
 
     def to_ragged_tensors(self, graph_tuple: GraphTuple) -> Tuple[List, Tensor]:
@@ -151,65 +177,56 @@ class GNPreprocessor(ModelPreprocessor):
         for input_ in self.input_signature:
             if input_ == self.Inputs.distance.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.edge_attributes["distance"],
-                        row_lengths=graph_tuple.num_edges,
+                    torch.nested.nested_tensor(
+                        graph_tuple.edge_attributes["distance"]
                     )
                 )
             if input_ == self.Inputs.offset.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.edge_attributes["offset"],
-                        row_lengths=graph_tuple.num_edges,
+                    torch.nested.nested_tensor(
+                        graph_tuple.edge_attributes["offset"]
                     )
                 )
             if input_ == self.Inputs.cell_translation.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.edge_attributes["cell_translation"],
-                        row_lengths=graph_tuple.num_edges,
+                    torch.nested.nested_tensor(
+                        graph_tuple.edge_attributes["cell_translation"]
                     )
                 )
             if input_ == self.Inputs.symmop.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.edge_attributes["symmop"],
-                        row_lengths=graph_tuple.num_edges,
+                    torch.nested.nested_tensor(
+                        graph_tuple.edge_attributes["symmop"]
                     )
                 )
             if input_ == self.Inputs.voronoi_ridge_area.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.edge_attributes["voronoi_ridge_area"],
-                        row_lengths=graph_tuple.num_edges,
+                    torch.nested.nested_tensor(
+                        graph_tuple.edge_attributes["voronoi_ridge_area"]
                     )
                 )
             if input_ == self.Inputs.atomic_number.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
+                    torch.nested.nested_tensor(
                         graph_tuple.node_attributes["atomic_number"],
-                        row_lengths=graph_tuple.num_nodes,
                     )
                 )
             if input_ == self.Inputs.frac_coords.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.node_attributes["frac_coords"],
-                        row_lengths=graph_tuple.num_nodes,
+                    torch.nested.nested_tensor(
+                        graph_tuple.node_attributes["frac_coords"]
                     )
                 )
             if input_ == self.Inputs.coords.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.node_attributes["coords"],
-                        row_lengths=graph_tuple.num_nodes,
+                    torch.nested.nested_tensor(
+                        graph_tuple.node_attributes["coords"]
                     )
                 )
             if input_ == self.Inputs.multiplicity.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.node_attributes["multiplicity"],
-                        row_lengths=graph_tuple.num_nodes,
+                    torch.nested.nested_tensor(
+                        graph_tuple.node_attributes["multiplicity"]
                     )
                 )
             if input_ == self.Inputs.line_graph_edge_indices.value:
@@ -221,26 +238,25 @@ class GNPreprocessor(ModelPreprocessor):
                         )
                     )
                 row_lengths = [len(l) for l in line_graph_edge_indices]
-                line_graph_edge_indices_ragged = RaggedTensor.from_row_lengths(
-                    np.concatenate(line_graph_edge_indices), row_lengths=row_lengths
+                line_graph_edge_indices_ragged = torch.nested.nested_tensor(
+                    np.concatenate(line_graph_edge_indices)
                 )
                 inputs_.append(line_graph_edge_indices_ragged)
             if input_ == self.Inputs.edge_indices.value:
                 inputs_.append(
-                    RaggedTensor.from_row_lengths(
-                        graph_tuple.edge_indices[:][:, [1, 0]],
-                        row_lengths=graph_tuple.num_edges,
+                    torch.nested.nested_tensor(
+                        graph_tuple.edge_indices[:][:, [1, 0]]
                     )
                 )
             if input_ == self.Inputs.lattice_matrix.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.graph_attributes["lattice_matrix"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.graph_attributes["lattice_matrix"],dtype =  input_.dtype
                     )
                 )
 
-        target = convert_to_tensor(
-            graph_tuple.graph_attributes["label"], self.output_signature.dtype
+        target = torch.tensor(
+            graph_tuple.graph_attributes["label"],dtype =   self.output_signature.dtype
         )
         return tuple(inputs_), target
 
@@ -252,56 +268,56 @@ class GNPreprocessor(ModelPreprocessor):
         for input_ in self.input_signature:
             if input_ == self.Inputs.distance.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.edge_attributes["distance"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.edge_attributes["distance"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.offset.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.edge_attributes["offset"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.edge_attributes["offset"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.cell_translation.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.edge_attributes["cell_translation"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.edge_attributes["cell_translation"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.symmop.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.edge_attributes["symmop"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.edge_attributes["symmop"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.voronoi_ridge_area.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.edge_attributes["voronoi_ridge_area"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.edge_attributes["voronoi_ridge_area"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.atomic_number.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.node_attributes["atomic_number"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.node_attributes["atomic_number"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.frac_coords.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.node_attributes["frac_coords"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.node_attributes["frac_coords"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.coords.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.node_attributes["coords"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.node_attributes["coords"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.multiplicity.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.node_attributes["multiplicity"], input_.dtype
+                    torch.tensor(
+                        graph_tuple.node_attributes["multiplicity"],dtype =   input_.dtype
                     )
                 )
             if input_ == self.Inputs.line_graph_edge_indices.value:
@@ -309,20 +325,20 @@ class GNPreprocessor(ModelPreprocessor):
                     graph_tuple.edge_indices[:], directions=self.line_graph_directions
                 )
                 line_graph_edge_indices = line_graph_edge_indices[:, [1, 0]]
-                inputs_.append(convert_to_tensor(line_graph_edge_indices, input_.dtype))
+                inputs_.append(torch.tensor(line_graph_edge_indices,dtype =    input_.dtype))
             if input_ == self.Inputs.edge_indices.value:
                 inputs_.append(
-                    convert_to_tensor(graph_tuple.edge_indices[:, [1, 0]], input_.dtype)
+                    torch.tensor(graph_tuple.edge_indices[:, [1, 0]],dtype =    input_.dtype)
                 )
             if input_ == self.Inputs.lattice_matrix.value:
                 inputs_.append(
-                    convert_to_tensor(
-                        graph_tuple.graph_attributes["lattice_matrix"][0], input_.dtype
+                    torch.tensor(
+                        graph_tuple.graph_attributes["lattice_matrix"][0],dtype =    input_.dtype
                     )
                 )
 
-        target = convert_to_tensor(
-            graph_tuple.graph_attributes["label"][0], self.output_signature.dtype
+        target = torch.tensor(
+            graph_tuple.graph_attributes["label"][0], dtype =   self.output_signature.dtype
         )
         return tuple(inputs_), target
 
