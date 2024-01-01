@@ -115,24 +115,18 @@ class GNPreprocessor(ModelPreprocessor):
 
     #PyG:
 
-            distance = torch.tensor([], dtype=float32, name="distance")
-        offset = torch.tensor(shape=(None, 3), dtype=float32, name="offset")
-        cell_translation = torch.tensor(
-            shape=(None, 3), dtype=float32, name="cell_translations"
-        )
-        symmop = torch.tensor(shape=(None, 4, 4), dtype=float32, name="symmops")
-        voronoi_ridge_area = torch.tensor(
-            shape=(None,), dtype=float32, name="voronoi_ridge_area"
-        )
-        atomic_number = torch.tensor(shape=(None,), dtype=int32, name="atomic_number")
-        frac_coords = torch.tensor(shape=(None, 3), dtype=float32, name="frac_coords")
-        coords = torch.tensor(shape=(None, 3), dtype=float32, name="coords")
-        multiplicity = torch.tensor(shape=(None,), dtype=int32, name="multiplicity")
-        line_graph_edge_indices = torch.tensor(
-            shape=(None, 2), dtype=int32, name="line_graph_edge_indices"
-        )
-        edge_indices = torch.tensor(shape=(None, 2), dtype=int32, name="edge_indices")
-        lattice_matrix = torch.tensor(shape=(3, 3), dtype=float32, name="lattice_matrix")
+            distance = torch.empty([0,], dtype=torch.float32)
+        offset = torch.empty([0,3], dtype=torch.float32)
+        cell_translation = torch.empty([0,3], dtype=torch.float32)
+        symmop = torch.empty([0,4,4], dtype=torch.float32)
+        voronoi_ridge_area = torch.empty([0,], dtype=torch.float32)
+        atomic_number = torch.empty([0,], dtype=torch.float32)
+        frac_coords = torch.empty([0,3], dtype=torch.float32)
+        coords = torch.empty([0,3], dtype=torch.float32)
+        multiplicity = torch.empty([0,], dtype=torch.float32)
+        line_graph_edge_indices = torch.empty([0,2], dtype=torch.float32)
+        edge_indices = torch.empty([0,2], dtype=torch.float32)
+        lattice_matrix = torch.empty([3,3], dtype=torch.float32)
 
     def __init__(
         self,
