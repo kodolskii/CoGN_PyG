@@ -154,10 +154,10 @@ class GNPreprocessor(ModelPreprocessor):
         input_signature = tuple([i.value for i in inputs])
         if output_signature is None:
             # output_signature = TensorSpec(shape=(), dtype=float64)
-            output_signature = torch.tensor([], dtype=float64)
+            output_signature = torch.empty([0,3], dtype=torch.float64)
         super().__init__(output_signature, input_signature)
 
-    def to_ragged_tensors(self, graph_tuple: GraphTuple) -> Tuple[List, Tensor]:
+    def to_nested_tensor(self, graph_tuple: GraphTuple) -> Tuple[List, Tensor]:
         """Builds RaggedTensors for the whole GraphTuple dataset.
 
         Args:
@@ -563,20 +563,20 @@ class MegNetPreprocessor(ModelPreprocessor):
     def to_tensor(self, graph_tuple: GraphTuple):
         assert graph_tuple.num_nodes.shape[0] == 1
 
-        edge_indices = convert_to_tensor(
+        edge_indices = torch.tensor(
             graph_tuple.edge_indices[:, [1, 0]], self.input_signature[0].dtype
         )
-        atomic_numbers = convert_to_tensor(
+        atomic_numbers = torch.tensor(
             graph_tuple.node_attributes["atomic_number"], self.input_signature[1].dtype
         )
         node_attributes = atomic_numbers
-        edge_distances = convert_to_tensor(
+        edge_distances = torch.tensor(
             np.expand_dims(graph_tuple.edge_attributes["distance"], -1),
             self.input_signature[2].dtype,
         )
-        graph_attributes = convert_to_tensor(0.0, self.input_signature[3].dtype)
+        graph_attributes = torch.tensor(0.0, self.input_signature[3].dtype)
 
-        target = convert_to_tensor(
+        target = torch.tensor(
             graph_tuple.graph_attributes["label"][0], self.output_signature.dtype
         )
 
@@ -601,21 +601,21 @@ class DimeNetPreprocessor(ModelPreprocessor):
     def to_tensor(self, graph_tuple: GraphTuple):
         assert graph_tuple.num_nodes.shape[0] == 1
 
-        edge_indices = convert_to_tensor(
+        edge_indices =  torch.tensor(
             graph_tuple.edge_indices[:, [1, 0]], self.input_signature[2].dtype
         )
-        atomic_numbers = convert_to_tensor(
+        atomic_numbers =  torch.tensor(
             graph_tuple.node_attributes["atomic_number"], self.input_signature[0].dtype
         )
         node_attributes = atomic_numbers
-        edge_diff = convert_to_tensor(
+        edge_diff =  torch.tensor(
             graph_tuple.edge_attributes["offset"], self.input_signature[1].dtype
         )
-        angle_indices = get_angle_indices(
+        angle_indices =  torch.tensor(
             graph_tuple.edge_indices[:], allow_multi_edges=True
         )[2]
 
-        target = convert_to_tensor(
+        target =  torch.tensor(
             graph_tuple.graph_attributes["label"][0], self.output_signature.dtype
         )
 
