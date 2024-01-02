@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 from kgcnn.layers.base import GraphBaseLayer
 from crystalgnns.kgcnn_layers.utils import enabled_ragged
+import torch
 
 
 class EdgeEmbedding(GraphBaseLayer):
@@ -126,9 +127,9 @@ class GaussBasisExpansion(GraphBaseLayer):
     def __init__(self, mu, sigma, **kwargs):
         super().__init__(**kwargs)
         # shape: (1, len(mu))
-        self.mu = tf.expand_dims(tf.constant(mu, float), 0)
+        self.mu = torch.unsqueeze(torch.tensor(mu,dtype = torch.float32), 0)
         # shape: (1, len(sigma))
-        self.sigma = tf.expand_dims(tf.constant(sigma, float), 0)
+        self.sigma = torch.unsqueeze(torch.tensor(sigma,dtype =  torch.float32), 0)
 
     @classmethod
     def from_bounds(cls, n: int, low: float, high: float, variance: float = 1.0):
@@ -150,7 +151,7 @@ class GaussBasisExpansion(GraphBaseLayer):
 
     @enabled_ragged
     def call(self, x, **kwargs):
-        return tf.exp(-tf.pow(x - self.mu, 2) / (2 * tf.pow(self.sigma, 2)))
+        return torch.exp(-torch.pow(x - self.mu, 2) / (2 * torch.pow(self.sigma, 2)))
 
     def plot_gaussians(self, low: float, high: float, n=1000):
         from matplotlib import pyplot as plt
