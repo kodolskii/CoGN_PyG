@@ -2,12 +2,16 @@ import tensorflow as tf
 import tensorflow.keras as ks
 
 from kgcnn.layers.base import GraphBaseLayer
+import torch
+
+# class GraphBaseLayer():
+#     def __init__(self,nested_validate : bool = False)
 
 
 class AtomEmbedding(GraphBaseLayer):
     """Emebedding layer for atomic number and other other element type properties."""
 
-    default_atomic_number_embedding_args = {"input_dim": 119, "output_dim": 64}
+    default_atomic_number_embedding_args = {"num_embeddings": 119, "embedding_dim": 64}
 
     def __init__(
         self,
@@ -45,23 +49,23 @@ class AtomEmbedding(GraphBaseLayer):
         super().__init__(**kwargs)
 
         self.atomic_mass = (
-            tf.constant(atomic_mass, dtype=float) if atomic_mass else None
+            torch.tensor(atomic_mass, dtype=float) if atomic_mass else None
         )
         self.atomic_radius = (
-            tf.constant(atomic_radius, dtype=float) if atomic_radius else None
+            torch.tensor(atomic_radius, dtype=float) if atomic_radius else None
         )
         self.electronegativity = (
-            tf.constant(electronegativity, dtype=float) if electronegativity else None
+            torch.tensor(electronegativity, dtype=float) if electronegativity else None
         )
         self.ionization_energy = (
-            tf.constant(ionization_energy, dtype=float) if ionization_energy else None
+            torch.tensor(ionization_energy, dtype=float) if ionization_energy else None
         )
         self.oxidation_states = (
-            tf.constant(oxidation_states, dtype=float) if oxidation_states else None
+            torch.tensor(oxidation_states, dtype=float) if oxidation_states else None
         )
 
         self.atomic_number_embedding_args = atomic_number_embedding_args
-        self.atomic_number_embedding_layer = ks.layers.Embedding(
+        self.atomic_number_embedding_layer = torch.nn.Embedding(
             **self.atomic_number_embedding_args
         )
 
@@ -76,19 +80,19 @@ class AtomEmbedding(GraphBaseLayer):
             atomic_mass = tf.expand_dims(tf.gather(self.atomic_mass, idxs), -1)
             feature_list.append(atomic_mass)
         if self.atomic_radius is not None:
-            atomic_radius = tf.expand_dims(tf.gather(self.atomic_radius, idxs), -1)
+            atomic_radius = torch.unsqueeze(torch.index_select(input = self.atomic_radius,index =  idxs), -1)
             feature_list.append(atomic_radius)
         if self.electronegativity is not None:
-            electronegativity = tf.expand_dims(
-                tf.gather(self.electronegativity, idxs), -1
+            electronegativity = torch.unsqueeze(
+                torch.index_select(input = self.electronegativity,index = idxs), -1
             )
             feature_list.append(electronegativity)
         if self.ionization_energy is not None:
-            ionization_energy = tf.expand_dims(
-                tf.gather(self.ionization_energy, idxs), -1
+            ionization_energy = torch.unsqueeze(
+                torch.index_select(input = self.ionization_energy,index = idxs), -1
             )
             feature_list.append(ionization_energy)
         if self.oxidation_states is not None:
-            oxidation_states = tf.gather(self.oxidation_states, idxs)
+            oxidation_states = torch.index_select(input = self.oxidation_states,input = idxs)
             feature_list.append(oxidation_states)
-        return tf.concat(feature_list, -1)
+        return torch.cat(feature_list, -1)
