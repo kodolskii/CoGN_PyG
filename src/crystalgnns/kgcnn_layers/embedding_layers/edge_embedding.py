@@ -88,13 +88,13 @@ class EdgeEmbedding(GraphBaseLayer):
             distance = inputs
             voronoi_area = None
 
-        d = tf.expand_dims(distance, -1)
+        d = torch.unsqueeze(distance, -1)
         distance_embedded = self.distance_embedding(d)
 
         if voronoi_area is not None:
-            v = tf.expand_dims(voronoi_area, -1)
+            v = torch.unsqueeze(voronoi_area, -1)
             voronoi_area_embedded = self.voronoi_area_embedding(v)
-            edge_embedded = tf.concat(
+            edge_embedded = torch.cat(
                 [distance_embedded, voronoi_area_embedded], axis=-1
             )
         else:
@@ -110,15 +110,15 @@ class SinCosExpansion(GraphBaseLayer):
         self.d = dim
         self.wave_length = float(wave_length) / math.pi
         self.frequencies = (
-            tf.cast(tf.pow(base, tf.range(self.d / 2)), float) * self.wave_length
+            torch.pow(base, torch.arange(self.d / 2)).type(torch.float) * self.wave_length
         )
 
     @enabled_ragged
     def call(self, inputs):
-        values_x_freq = tf.expand_dims(inputs, -1) * self.frequencies
-        sines = tf.sin(values_x_freq)
-        cosines = tf.cos(values_x_freq)
-        return tf.concat([sines, cosines], axis=-1)
+        values_x_freq = torch.unsqueeze(inputs, -1) * self.frequencies
+        sines = torch.sin(values_x_freq)
+        cosines = torch.cos(values_x_freq)
+        return torch.cat([sines, cosines], axis=-1)
 
 
 class GaussBasisExpansion(GraphBaseLayer):
