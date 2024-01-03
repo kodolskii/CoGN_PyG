@@ -77,7 +77,7 @@ class AtomEmbedding(GraphBaseLayer):
         atomic_number_embedding = self.atomic_number_embedding_layer(idxs)
         feature_list.append(atomic_number_embedding)
         if self.atomic_mass is not None:
-            atomic_mass = tf.expand_dims(tf.gather(self.atomic_mass, idxs), -1)
+            atomic_mass = torch.unsqueeze(tf.gather(self.atomic_mass, idxs), -1)
             feature_list.append(atomic_mass)
         if self.atomic_radius is not None:
             atomic_radius = torch.unsqueeze(torch.index_select(input = self.atomic_radius,index =  idxs), -1)
