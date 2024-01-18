@@ -3,8 +3,8 @@ import json
 from pathlib import Path
 from typing import Union, Optional
 from matbench.bench import MatbenchBenchmark
-from /content/CoGN_PyG/src/crystalgnns.crystal_preprocessing.crystal_preprocessors import CrystalPreprocessor
-from /content/CoGN_PyG/src/crystalgnns.datasets.utils import create_graph_dataset, MetaDataWrapper
+from content/CoGN_PyG/src/crystalgnns.crystal_preprocessing.crystal_preprocessors import CrystalPreprocessor
+from content/CoGN_PyG/src/crystalgnns.datasets.utils import create_graph_dataset, MetaDataWrapper
 
 
 class MatbenchDataset:
