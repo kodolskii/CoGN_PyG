@@ -2,7 +2,7 @@ from pymatgen.core.structure import Structure
 from typing import Callable, Optional
 from hashlib import md5
 from networkx import MultiDiGraph
-import /content/CoGN_PyG/src/crystalgnns.crystal_preprocessing.graph_builder as graph_builder
+import content/CoGN_PyG/src/crystalgnns.crystal_preprocessing.graph_builder as graph_builder
 
 class CrystalPreprocessor(Callable[[Structure], MultiDiGraph]):
     """Base class for crystal preprocessors.
