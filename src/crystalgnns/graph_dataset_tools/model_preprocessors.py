@@ -17,7 +17,7 @@ from torch_geometric.loader import DataLoader
 from crystalgnns.graph_dataset_tools.graph_tuple import GraphTuple
 # from kgcnn.graph.adj import get_angle_indices
 from enum import Enum
-from src/crystalgnns.graph_dataset_tools.line_graph import get_line_graph
+from crystalgnns.graph_dataset_tools.line_graph import get_line_graph
 
 
 class ModelPreprocessor:
