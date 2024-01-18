@@ -115,7 +115,7 @@ class GNPreprocessor(ModelPreprocessor):
 
     #PyG:
 
-            distance = torch.empty([0,], dtype=torch.float32)
+        distance = torch.empty([0,], dtype=torch.float32)
         offset = torch.empty([0,3], dtype=torch.float32)
         cell_translation = torch.empty([0,3], dtype=torch.float32)
         symmop = torch.empty([0,4,4], dtype=torch.float32)
