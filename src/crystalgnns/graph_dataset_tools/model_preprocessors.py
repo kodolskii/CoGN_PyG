@@ -14,7 +14,7 @@ from typing import Tuple, List
 # )
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
-from src.crystalgnns.graph_dataset_tools.graph_tuple import GraphTuple
+from crystalgnns.graph_dataset_tools.graph_tuple import GraphTuple
 # from kgcnn.graph.adj import get_angle_indices
 from enum import Enum
 from crystalgnns.graph_dataset_tools.line_graph import get_line_graph
